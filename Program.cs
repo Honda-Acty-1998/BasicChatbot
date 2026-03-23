@@ -56,8 +56,23 @@ while (true)
     }
 
     Console.Write("Bot: ");
-    await chat.AppendUserInput(userInput).StreamResponse(Console.Write);
+    await chat.AppendUserInput(userInput).StreamResponse(WriteOutput);
     Console.WriteLine();
+}
+
+
+static void WriteOutput(string output)
+{
+    if (output.Contains("**"))
+    {
+        if (Console.ForegroundColor == ConsoleColor.Gray)
+            Console.ForegroundColor = ConsoleColor.Green;
+        else
+            Console.ForegroundColor = ConsoleColor.Gray;
+
+    }
+    else
+        Console.Write(output);
 }
 
 static Conversation CreateConversation(TornadoApi api, string mode)
