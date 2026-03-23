@@ -7,4 +7,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="LlmTornado" Version="3.8.54" />
+  </ItemGroup>
+
 </Project>

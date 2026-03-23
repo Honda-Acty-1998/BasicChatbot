@@ -1,8 +1,8 @@
 ﻿using LlmTornado;
 using LlmTornado.Chat;
 using LlmTornado.Chat.Models;
-using Microsoft.VisualBasic;
-using System.Diagnostics;
+using LlmTornado.Code;
+
 
 string currentMode = "tutor";
 
@@ -16,8 +16,7 @@ Conversation chat = CreateConversation(api, currentMode);
 while (true)
 {
     Console.WriteLine();
-    Console.WriteLine(% bodyquot; Current mode: { currentMode}
-    ");
+    Console.WriteLine($"Current mode: {currentMode}");
     Console.Write("You: ");
     string? userInput = Console.ReadLine();
 
@@ -46,8 +45,7 @@ while (true)
         {
             currentMode = requestedMode;
             chat = CreateConversation(api, currentMode);
-            Console.WriteLine(% bodyquot; Switched to { currentMode}
-            mode.");
+            Console.WriteLine($"Switched to {currentMode} mode.");
         }
         else
         {
