@@ -3,37 +3,64 @@ using LlmTornado.Chat;
 using LlmTornado.Chat.Models;
 using LlmTornado.Code;
 
+//  UX IMPROVEMENT: Welcome Message 
+Console.ForegroundColor = ConsoleColor.Cyan;
+Console.WriteLine("==================================================");
+Console.WriteLine("       WELCOME TO THE AI STUDY COACH            ");
+Console.WriteLine("   Modes: Tutor, Quiz, Hint | Type /help        ");
+Console.WriteLine("==================================================");
+Console.ResetColor();
 
 string currentMode = "tutor";
 
+// Initialize API
 TornadoApi api = new TornadoApi(
     new Uri("http://127.0.0.1:1234"),
     string.Empty,
     LLmProviders.OpenAi);
 
+// Initialize Conversation
 Conversation chat = CreateConversation(api, currentMode);
 
 while (true)
 {
     Console.WriteLine();
-    Console.WriteLine($"Current mode: {currentMode}");
+    //  UX IMPROVEMENT: Mode Display 
+    Console.ForegroundColor = ConsoleColor.DarkGray;
+    Console.WriteLine($"[Current mode: {currentMode.ToUpper()}]");
+    Console.ResetColor();
+
+    Console.ForegroundColor = ConsoleColor.Cyan;
     Console.Write("You: ");
+    Console.ResetColor();
+
     string? userInput = Console.ReadLine();
 
     if (string.IsNullOrWhiteSpace(userInput))
         continue;
 
+    // Commands 
     if (userInput.Equals("/exit", StringComparison.OrdinalIgnoreCase))
         break;
 
     if (userInput.Equals("/help", StringComparison.OrdinalIgnoreCase))
     {
-        Console.WriteLine("Commands:");
-        Console.WriteLine("/mode tutor");
-        Console.WriteLine("/mode quiz");
-        Console.WriteLine("/mode hint");
-        Console.WriteLine("/help");
-        Console.WriteLine("/exit");
+        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.WriteLine("\n--- Command Menu ---");
+        Console.WriteLine("/mode tutor - Detailed explanations");
+        Console.WriteLine("/mode quiz  - Tests your knowledge");
+        Console.WriteLine("/mode hint  - Small clues only");
+        Console.WriteLine("/clear      - Restart the conversation history");
+        Console.WriteLine("/exit       - Close the program");
+        Console.ResetColor();
+        continue;
+    }
+
+    // UX IMPROVEMENT: Clear Conversation Command
+    if (userInput.Equals("/clear", StringComparison.OrdinalIgnoreCase))
+    {
+        chat = CreateConversation(api, currentMode);
+        Console.WriteLine("System: Conversation history cleared.");
         continue;
     }
 
@@ -45,45 +72,43 @@ while (true)
         {
             currentMode = requestedMode;
             chat = CreateConversation(api, currentMode);
-            Console.WriteLine($"Switched to {currentMode} mode.");
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine($"✔ Switched to {currentMode} mode.");
+            Console.ResetColor();
         }
         else
         {
-            Console.WriteLine("Unknown mode.");
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("❌ Unknown mode. Try: tutor, quiz, or hint.");
+            Console.ResetColor();
         }
-
         continue;
     }
 
+    //  Bot Response 
+    Console.ForegroundColor = ConsoleColor.White;
     Console.Write("Bot: ");
-    await chat.AppendUserInput(userInput).StreamResponse(WriteOutput);
-    Console.WriteLine();
-}
 
-
-static void WriteOutput(string output)
-{
-    if (output.Contains("**"))
+    // Using simple streaming without the broken bold logic to ensure stability
+    await chat.AppendUserInput(userInput).StreamResponse(token =>
     {
-        if (Console.ForegroundColor == ConsoleColor.Gray)
-            Console.ForegroundColor = ConsoleColor.Green;
-        else
-            Console.ForegroundColor = ConsoleColor.Gray;
+        Console.Write(token);
+    });
 
-    }
-    else
-        Console.Write(output);
+    Console.WriteLine();
+    Console.ResetColor();
 }
 
 static Conversation CreateConversation(TornadoApi api, string mode)
 {
+    //Ensure the model name matches what you have loaded in LM Studio
     Conversation chat = api.Chat.CreateConversation(new ChatModel("google/gemma-3-4b"));
 
     string systemPrompt = mode switch
     {
-        "quiz" => "You are a programming study coach. Ask a guiding question before giving answers. Encourage thinking.",
-        "hint" => "You are a programming hint bot. Give only a small hint or next step. Keep responses short.",
-        _ => "You are a helpful programming tutor for beginner students. Explain clearly and use short examples when useful."
+        "quiz" => "You are a programming study coach. Do NOT give answers. Instead, ask the user a short question that guides them to the answer. Keep it interactive.",
+        "hint" => "You are a programming hint bot. Provide only a tiny clue or the very next step. Do not provide the full solution.",
+        _ => "You are a helpful programming tutor. Explain concepts using simple metaphors and provide a very short code example."
     };
 
     chat.AppendSystemMessage(systemPrompt);
